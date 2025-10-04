@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Beautiful Mint Calculator</title>
+  <style>
+    :root {
+      --primary: #6c5ce7;
+      --secondary: #00cec9;
+      --dark-bg: #0f0f1b;
+      --glass-bg: rgba(255, 255, 255, 0.08);
+      --glass-border: rgba(255, 255, 255, 0.2);
+      --text-light: #f1f2f6;
+      --text-dark: #2d3436;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      height: 100vh;
+      background: linear-gradient(135deg, #c2fce8, #a0f1df); 
+      background-size: 400% 400%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.5s ease;
+    }
+
+    .calculator {
+      width: 360px;
+      background: var(--glass-bg);
+      border-radius: 20px;
+      backdrop-filter: blur(20px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      padding: 30px 25px;
+      border: 1px solid var(--glass-border);
+      color: var(--text-light);
+      transition: all 0.4s ease;
+    }
+
+    .light-mode {
+      background: var(--text-light);
+      color: var(--text-dark);
+    }
+
+    .light-mode .calculator {
+      background: white;
+      color: var(--text-dark);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    #display {
+      width: 100%;
+      height: 60px;
+      background: rgba(255, 255, 255, 0.15);
+      border: none;
+      border-radius: 15px;
+      font-size: 26px;
+      color: black;
+      padding: 10px 20px;
+      text-align: right;
+      margin-bottom: 25px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.4);
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+
+    .buttons button {
+      padding: 20px;
+      font-size: 20px;
+      border: none;
+      border-radius: 15px;
+      background: linear-gradient(145deg, #333, #222);
+      color: white;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    }
+
+    .buttons button:hover {
+      transform: scale(1.08);
+      filter: brightness(1.2);
+    }
+
+    .equal {
+      grid-column: span 2;
+      background: linear-gradient(to right, #00b894, #00cec9);
+      color: #fff;
+    }
+
+    .clear {
+      background: linear-gradient(to right, #d63031, #ff7675);
+    }
+
+    .toggle-mode {
+      margin: 20px auto 0;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .toggle-mode button {
+      background-color: transparent;
+      border: 2px solid currentColor;
+      padding: 10px 25px;
+      border-radius: 30px;
+      font-size: 14px;
+      color: black;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-mode button:hover {
+      background-color: rgba(255,255,255,0.1);
+    }
+
+    .history {
+      margin-top: 20px;
+      max-height: 120px;
+      overflow-y: auto;
+      background-color: rgba(255, 255, 255, 0.05);
+      padding: 10px 15px;
+      border-radius: 10px;
+      font-size: 14px;
+      color: #ccc;
+    }
+
+    .light-mode .history {
+      background-color: #f1f1f1;
+      color: #444;
+    }
+
+    .history-item {
+      margin-bottom: 5px;
+    }
+
+    .history::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .history::-webkit-scrollbar-thumb {
+      background-color: rgba(255,255,255,0.2);
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <input type="text" id="display" placeholder="0" disabled />
+    <div class="buttons">
+      <button onclick="append('7')">7</button>
+      <button onclick="append('8')">8</button>
+      <button onclick="append('9')">9</button>
+      <button onclick="append('/')">÷</button>
+
+      <button onclick="append('4')">4</button>
+      <button onclick="append('5')">5</button>
+      <button onclick="append('6')">6</button>
+      <button onclick="append('*')">×</button>
+
+      <button onclick="append('1')">1</button>
+      <button onclick="append('2')">2</button>
+      <button onclick="append('3')">3</button>
+      <button onclick="append('-')">−</button>
+
+      <button onclick="append('0')">0</button>
+      <button onclick="append('.')">.</button>
+      <button class="equal" onclick="calculate()">=</button>
+      <button onclick="append('+')">+</button>
+
+      <button class="clear" onclick="clearDisplay()">C</button>
+    </div>
+
+    <div class="toggle-mode">
+      <button onclick="toggleMode()"> Change mode</button>
+    </div>
+
+    <div class="history" id="history"></div>
+  </div>
+
+  <script>
+    const display = document.getElementById('display');
+    const historyPanel = document.getElementById('history');
+    const body = document.body;
+
+    function append(value) {
+      display.value += value;
+    }
+
+    function clearDisplay() {
+      display.value = '';
+    }
+
+    function calculate() {
+      try {
+        const result = Function('"use strict";return (' + display.value + ')')();
+        if (isNaN(result)) throw Error("Invalid");
+        const expression = display.value + ' = ' + result;
+        display.value = result;
+        addToHistory(expression);
+      } catch (e) {
+        display.value = 'Error';
+      }
+    }
+
+    function addToHistory(text) {
+      const item = document.createElement('div');
+      item.className = 'history-item';
+      item.textContent = text;
+      historyPanel.prepend(item);
+    }
+
+    function toggleMode() {
+      body.classList.toggle('light-mode');
+    }
+
+    // Keyboard Support
+    document.addEventListener('keydown', (e) => {
+      const key = e.key;
+      if ((key >= '0' && key <= '9') || "+-*/.".includes(key)) {
+        append(key);
+      } else if (key === 'Enter') {
+        e.preventDefault();
+        calculate();
+      } else if (key === 'Backspace') {
+        display.value = display.value.slice(0, -1);
+      } else if (key === 'Escape') {
+        clearDisplay();
+      }
+    });
+  </script>
+</body>
+</html>
